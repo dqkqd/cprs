@@ -5,10 +5,12 @@ use std::{
 
 use anyhow::Context;
 
-use crate::task::Task;
+use crate::{config::Config, task::Task};
 
 pub fn listen() {
-    let listener = TcpListener::bind("127.0.0.1:27121").unwrap();
+    let config = Config::load();
+    let address = format!("127.0.0.1:{}", config.competitive_companion_port);
+    let listener = TcpListener::bind(address).unwrap();
     for stream in listener.incoming() {
         let stream = stream.unwrap();
         handle_stream(stream);

@@ -8,8 +8,11 @@ pub struct Config {
     pub user_name: String,
     pub password: String,
     pub workspace: PathBuf,
+
+    // un important config
     pub history: PathBuf,
     pub history_limit: usize,
+    pub competitive_companion_port: u16,
 }
 
 impl Default for Config {
@@ -26,6 +29,7 @@ impl Default for Config {
                 .unwrap()
                 .join("history.json"),
             history_limit: 1000,
+            competitive_companion_port: 27121,
         }
     }
 }
