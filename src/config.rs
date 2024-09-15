@@ -41,4 +41,10 @@ impl Config {
             .with_context(|| "Cannot save config file for cprs")
             .unwrap()
     }
+    pub fn ask_user_name() {
+        todo!()
+    }
+    pub fn ask_password() {
+        todo!()
+    }
 }
