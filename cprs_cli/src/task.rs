@@ -52,6 +52,7 @@ impl Task {
             .join(task_name))
     }
     pub fn setup(&self) -> anyhow::Result<()> {
+        let config = Config::load();
         let task_folder = self.task_folder()?;
         let test_folder = task_folder.join("tests");
         fs::create_dir_all(&test_folder)?;
@@ -62,6 +63,10 @@ impl Task {
             fs::write(input, &test_case.input)?;
             fs::write(output, &test_case.output)?;
         }
+        let src = task_folder.join("src");
+        fs::create_dir_all(&src)?;
+        fs::copy(config.templates.join("main.rs"), src.join("main.rs"))
+            .with_context(|| "Cannot copy template main file")?;
         fs::write(self.metadata_file(), serde_json::to_string(&self)?)?;
         println_to_console(format!("Task created: `{}`", task_folder.display()));
         History::add_task(self.clone())?;
