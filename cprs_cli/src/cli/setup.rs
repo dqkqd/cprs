@@ -1,7 +1,7 @@
 use crate::config::Config;
 
 use super::{cmd::Setup, Run};
-pub use anyhow::Result;
+use anyhow::Result;
 
 impl Run for Setup {
     fn run(&self) -> Result<()> {

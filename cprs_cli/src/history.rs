@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 
-use anyhow::Context;
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -14,7 +14,7 @@ pub struct History {
 }
 
 impl History {
-    fn load() -> anyhow::Result<History> {
+    fn load() -> Result<History> {
         let config = Config::load();
         match std::fs::read_to_string(&config.history) {
             Ok(content) => serde_json::from_str(&content).with_context(|| {
@@ -26,13 +26,13 @@ impl History {
             Err(_) => Ok(History::default()),
         }
     }
-    fn save(&self) -> anyhow::Result<()> {
+    fn save(&self) -> Result<()> {
         let config = Config::load();
         std::fs::write(&config.history, serde_json::to_string(self)?)
             .with_context(|| "Cannot save to history file")?;
         Ok(())
     }
-    pub fn add_task(task: Task) -> anyhow::Result<()> {
+    pub fn add_task(task: Task) -> Result<()> {
         let mut history = History::load()?;
         match history.tasks.iter().position(|t| t.url == task.raw.url) {
             Some(0) => {
@@ -63,7 +63,7 @@ impl History {
             .map(Task::from)
             .collect()
     }
-    pub fn get_task(task_id: usize) -> anyhow::Result<Task> {
+    pub fn get_task(task_id: usize) -> Result<Task> {
         History::load()
             .unwrap_or_default()
             .tasks

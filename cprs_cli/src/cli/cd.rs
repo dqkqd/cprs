@@ -1,7 +1,7 @@
 use crate::{history::History, utils::println_to_console};
 
 use super::{cmd::Cd, Run};
-pub use anyhow::Result;
+use anyhow::Result;
 
 impl Run for Cd {
     fn run(&self) -> Result<()> {

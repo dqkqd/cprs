@@ -1,7 +1,7 @@
 use crate::utils::println_to_console;
 
 use super::{cmd::Init, Run};
-pub use anyhow::Result;
+use anyhow::Result;
 
 impl Run for Init {
     fn run(&self) -> Result<()> {

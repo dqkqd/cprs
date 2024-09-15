@@ -1,6 +1,7 @@
 use clap::Parser;
 
 use super::Run;
+use anyhow::Result;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -32,13 +33,13 @@ pub struct Cd {
 }
 
 impl Cmd {
-    pub fn entry_point() -> anyhow::Result<()> {
+    pub fn entry_point() -> Result<()> {
         Cmd::parse().run()
     }
 }
 
 impl Run for Cmd {
-    fn run(&self) -> anyhow::Result<()> {
+    fn run(&self) -> Result<()> {
         match self {
             Cmd::Init(init) => init.run()?,
             Cmd::Listen(listen) => listen.run()?,

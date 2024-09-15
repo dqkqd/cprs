@@ -1,7 +1,7 @@
 use crate::listener;
 
 use super::{cmd::Listen, Run};
-pub use anyhow::Result;
+use anyhow::Result;
 
 impl Run for Listen {
     fn run(&self) -> Result<()> {

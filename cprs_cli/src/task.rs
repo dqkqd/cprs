@@ -1,6 +1,6 @@
 use std::{fs, path::PathBuf};
 
-use anyhow::Context;
+use anyhow::{Context, Result};
 use heck::ToSnakeCase;
 use serde::{Deserialize, Serialize};
 
@@ -46,8 +46,13 @@ impl From<TaskRaw> for Task {
             .unwrap();
         let contest_name = iter
             .next()
-            .with_context(|| format!("Cannot get contest name from {}", &raw.group)).unwrap();
-        let task_folder = config.workspace.join(contest_site).join(contest_name).join(&task_name);
+            .with_context(|| format!("Cannot get contest name from {}", &raw.group))
+            .unwrap();
+        let task_folder = config
+            .workspace
+            .join(contest_site)
+            .join(contest_name)
+            .join(&task_name);
 
         Self {
             raw,
@@ -62,14 +67,14 @@ impl Task {
     pub fn summary(&self) -> String {
         format!("Task `{}`, from `{}`", &self.raw.name, &self.raw.url)
     }
-    pub fn setup(&self) -> anyhow::Result<()> {
+    pub fn setup(&self) -> Result<()> {
         self.setup_testcases()?;
         self.setup_templates()?;
         self.setup_metadata()?;
         println_to_console(format!("Task created: {}", self.summary()));
         Ok(())
     }
-    fn setup_testcases(&self) -> anyhow::Result<()> {
+    fn setup_testcases(&self) -> Result<()> {
         let test_folder = self.task_folder.join("tests");
         fs::create_dir_all(&test_folder)?;
         for (i, test_case) in self.raw.tests.iter().enumerate() {
@@ -81,7 +86,7 @@ impl Task {
         }
         Ok(())
     }
-    fn setup_templates(&self) -> anyhow::Result<()> {
+    fn setup_templates(&self) -> Result<()> {
         fs::create_dir_all(self.task_folder.join("src"))?;
 
         let rendered_cargo = Template::render_cargo(self)?;
@@ -94,7 +99,7 @@ impl Task {
 
         Ok(())
     }
-    fn setup_metadata(&self) -> anyhow::Result<()> {
+    fn setup_metadata(&self) -> Result<()> {
         let metadata_file = self.task_folder.join("task_desc.json");
         fs::write(metadata_file, serde_json::to_string(&self.raw)?)?;
         History::add_task(self.clone())?;

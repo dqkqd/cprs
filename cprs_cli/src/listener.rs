@@ -5,7 +5,10 @@ use std::{
 
 use anyhow::Context;
 
-use crate::{config::Config, task::{Task, TaskRaw}};
+use crate::{
+    config::Config,
+    task::{Task, TaskRaw},
+};
 
 pub fn listen() {
     let config = Config::load();
