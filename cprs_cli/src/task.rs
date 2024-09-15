@@ -1,8 +1,9 @@
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 use anyhow::{Context, Result};
 use heck::ToSnakeCase;
 use serde::{Deserialize, Serialize};
+use tokio::fs;
 
 use crate::{config::Config, history::History, template::Template, utils::println_to_console};
 
@@ -67,42 +68,42 @@ impl Task {
     pub fn summary(&self) -> String {
         format!("Task `{}`, from `{}`", &self.raw.name, &self.raw.url)
     }
-    pub fn setup(&self) -> Result<()> {
-        self.setup_testcases()?;
-        self.setup_templates()?;
-        self.setup_metadata()?;
+    pub async fn setup(&self) -> Result<()> {
+        self.setup_testcases().await?;
+        self.setup_templates().await?;
+        self.setup_metadata().await?;
         println_to_console(format!("Task created: {}", self.summary()));
         Ok(())
     }
-    fn setup_testcases(&self) -> Result<()> {
+    async fn setup_testcases(&self) -> Result<()> {
         let test_folder = self.task_folder.join("tests");
-        fs::create_dir_all(&test_folder)?;
+        fs::create_dir_all(&test_folder).await?;
         for (i, test_case) in self.raw.tests.iter().enumerate() {
             let case_name = format!("case_{:02}", i + 1);
             let input = test_folder.join(format!("{case_name}.in"));
             let output = test_folder.join(format!("{case_name}.out"));
-            fs::write(input, &test_case.input)?;
-            fs::write(output, &test_case.output)?;
+            fs::write(input, &test_case.input).await?;
+            fs::write(output, &test_case.output).await?;
         }
         Ok(())
     }
-    fn setup_templates(&self) -> Result<()> {
-        fs::create_dir_all(self.task_folder.join("src"))?;
+    async fn setup_templates(&self) -> Result<()> {
+        fs::create_dir_all(self.task_folder.join("src")).await?;
 
         let rendered_cargo = Template::render_cargo(self)?;
         let cargo_file = self.task_folder.join("Cargo.toml");
-        fs::write(cargo_file, rendered_cargo)?;
+        fs::write(cargo_file, rendered_cargo).await?;
 
         let rendered_main = Template::render_main(self)?;
         let main_file = self.task_folder.join("src").join("main.rs");
-        fs::write(main_file, rendered_main)?;
+        fs::write(main_file, rendered_main).await?;
 
         Ok(())
     }
-    fn setup_metadata(&self) -> Result<()> {
+    async fn setup_metadata(&self) -> Result<()> {
         let metadata_file = self.task_folder.join("task_desc.json");
-        fs::write(metadata_file, serde_json::to_string(&self.raw)?)?;
-        History::add_task(self.clone())?;
+        fs::write(metadata_file, serde_json::to_string(&self.raw)?).await?;
+        History::add_task(self.clone()).await?;
         Ok(())
     }
 }

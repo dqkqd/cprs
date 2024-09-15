@@ -10,5 +10,5 @@ pub use cmd::Cmd;
 use anyhow::Result;
 
 trait Run {
-    fn run(&self) -> Result<()>;
+    async fn run(&self) -> Result<()>;
 }

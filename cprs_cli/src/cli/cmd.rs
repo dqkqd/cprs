@@ -33,19 +33,19 @@ pub struct Cd {
 }
 
 impl Cmd {
-    pub fn entry_point() -> Result<()> {
-        Cmd::parse().run()
+    pub async fn entry_point() -> Result<()> {
+        Cmd::parse().run().await
     }
 }
 
 impl Run for Cmd {
-    fn run(&self) -> Result<()> {
+    async fn run(&self) -> Result<()> {
         match self {
-            Cmd::Init(init) => init.run()?,
-            Cmd::Listen(listen) => listen.run()?,
-            Cmd::List(list) => list.run()?,
-            Cmd::Cd(cd) => cd.run()?,
-            Cmd::Setup(setup) => setup.run()?,
+            Cmd::Init(init) => init.run().await?,
+            Cmd::Listen(listen) => listen.run().await?,
+            Cmd::List(list) => list.run().await?,
+            Cmd::Cd(cd) => cd.run().await?,
+            Cmd::Setup(setup) => setup.run().await?,
         }
         Ok(())
     }

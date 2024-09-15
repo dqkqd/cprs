@@ -4,8 +4,8 @@ use super::{cmd::List, Run};
 use anyhow::Result;
 
 impl Run for List {
-    fn run(&self) -> Result<()> {
-        let tasks = History::get_latest_tasks(self.task_count);
+    async fn run(&self) -> Result<()> {
+        let tasks = History::get_latest_tasks(self.task_count).await;
         println_to_console(format!("Showing {} latest tasks:", self.task_count));
         tasks
             .iter()

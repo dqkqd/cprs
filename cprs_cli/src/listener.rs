@@ -1,39 +1,37 @@
-use std::{
-    io::{BufRead, BufReader},
+use anyhow::{Context, Result};
+use tokio::{
+    io::AsyncReadExt,
     net::{TcpListener, TcpStream},
 };
-
-use anyhow::Context;
 
 use crate::{
     config::Config,
     task::{Task, TaskRaw},
 };
 
-pub fn listen() {
+pub async fn listen() -> Result<()> {
     let config = Config::load();
     let address = format!("127.0.0.1:{}", config.competitive_companion_port);
-    let listener = TcpListener::bind(address).unwrap();
-    for stream in listener.incoming() {
-        let stream = stream.unwrap();
-        handle_stream(stream);
+    let listener = TcpListener::bind(address).await.unwrap();
+    loop {
+        let (socket, _) = listener.accept().await.unwrap();
+        tokio::spawn(async move {
+            process(socket).await.unwrap();
+        });
     }
 }
 
-fn handle_stream(mut stream: TcpStream) {
-    let buf_reader = BufReader::new(&mut stream);
-    let task_raw_description = buf_reader
+async fn process(mut stream: TcpStream) -> Result<()> {
+    let mut buf = String::new();
+    stream.read_to_string(&mut buf).await?;
+    let task_raw_description = buf
         .lines()
-        .map(|result| result.unwrap())
         .skip_while(|line| !line.is_empty())
-        .last();
-
-    let task_raw: TaskRaw = match task_raw_description {
-        Some(description) => serde_json::from_str(&description).unwrap(),
-        None => todo!(),
-    };
+        .last()
+        .with_context(|| "Cannot get task description")?;
+    let task_raw: TaskRaw = serde_json::from_str(task_raw_description)?;
     let task = Task::from(task_raw);
     task.setup()
+        .await
         .with_context(|| format!("Cannot setup task {}", &task.raw.name))
-        .unwrap();
 }

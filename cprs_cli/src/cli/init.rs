@@ -4,7 +4,7 @@ use super::{cmd::Init, Run};
 use anyhow::Result;
 
 impl Run for Init {
-    fn run(&self) -> Result<()> {
+    async fn run(&self) -> Result<()> {
         let function = r#"
 cprs() {
   if [[ "$#" -eq 2 && "$1" == "cd" ]]

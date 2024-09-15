@@ -1,6 +1,7 @@
 use anyhow::Result;
 use cprs_cli::Cmd;
 
-fn main() -> Result<()> {
-    Cmd::entry_point()
+#[tokio::main]
+async fn main() -> Result<()> {
+    Cmd::entry_point().await
 }

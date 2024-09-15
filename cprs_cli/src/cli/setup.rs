@@ -4,7 +4,7 @@ use super::{cmd::Setup, Run};
 use anyhow::Result;
 
 impl Run for Setup {
-    fn run(&self) -> Result<()> {
+    async fn run(&self) -> Result<()> {
         Config::default().save();
         Ok(())
     }
