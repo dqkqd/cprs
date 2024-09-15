@@ -27,6 +27,9 @@ impl PartialEq for Task {
 impl Eq for Task {}
 
 impl Task {
+    pub fn metadata_file(&self) -> PathBuf {
+        self.task_folder().unwrap().join("task_desc.json")
+    }
     pub fn summary(&self) -> String {
         format!("Task `{}`, from `{}`", &self.name, &self.url)
     }
@@ -59,6 +62,7 @@ impl Task {
             fs::write(input, &test_case.input)?;
             fs::write(output, &test_case.output)?;
         }
+        fs::write(self.metadata_file(), serde_json::to_string(&self)?)?;
         println_to_console(format!("Task created: `{}`", task_folder.display()));
         History::add_task(self.clone())?;
         Ok(())
