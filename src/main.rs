@@ -1,5 +1,7 @@
-use cprs::listener;
+use clap::Parser;
+use cprs::cli::Cli;
 
 fn main() {
-    listener::listen();
+    let args = Cli::parse();
+    args.run();
 }
