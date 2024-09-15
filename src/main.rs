@@ -1,7 +1,5 @@
-use cprs::config::Config;
+use cprs::listener;
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let cfg = Config::load()?;
-    cfg.save()?;
-    Ok(())
+fn main() {
+    listener::listen();
 }
