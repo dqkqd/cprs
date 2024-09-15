@@ -7,10 +7,14 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn load() -> Result<Config, confy::ConfyError> {
+    pub fn load() -> Config {
         confy::load("cprs", "config")
+            .with_context(|| "Cannot get config file for cprs")
+            .unwrap()
     }
-    pub fn save(self) -> Result<(), confy::ConfyError> {
-        confy::store("cprs", "config", self)
+    pub fn save(&self) {
+        confy::store("cprs", "config", self.clone())
+            .with_context(|| "Cannot save config file for cprs")
+            .unwrap()
     }
 }
