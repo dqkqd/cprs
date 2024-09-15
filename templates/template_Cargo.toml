@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "{{ task_name }}"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+algo = {{ '{' }} path = "{{ algo_lib }}" {{ '}' }}
+

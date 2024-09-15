@@ -9,6 +9,7 @@ pub struct Config {
     pub password: String,
     pub workspace: PathBuf,
     pub templates: PathBuf,
+    pub algo_lib: PathBuf,
 
     // un important config
     pub history: PathBuf,
@@ -29,6 +30,7 @@ impl Default for Config {
             password: "".into(),
             workspace: current_dir.join("contests"),
             templates: current_dir.join("templates"),
+            algo_lib: current_dir.join("algo"),
             history: data_dir.join("history.json"),
             history_limit: 1000,
             competitive_companion_port: 27121,

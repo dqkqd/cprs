@@ -4,7 +4,7 @@ use anyhow::Context;
 use heck::ToSnakeCase;
 use serde::{Deserialize, Serialize};
 
-use crate::{config::Config, history::History, utils::println_to_console};
+use crate::{config::Config, history::History, template::Template, utils::println_to_console};
 
 // https://github.com/jmerle/competitive-companion?tab=readme-ov-file#the-format
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,6 +28,12 @@ impl PartialEq for Task {
 impl Eq for Task {}
 
 impl Task {
+    pub fn task_name(&self) -> String {
+        match &self.languages {
+            Languages::Java(lang) => &lang.task_class,
+        }
+        .to_snake_case()
+    }
     pub fn summary(&self) -> String {
         format!("Task `{}`, from `{}`", &self.name, &self.url)
     }
@@ -66,11 +72,16 @@ impl Task {
         Ok(())
     }
     fn setup_templates(&self) -> anyhow::Result<()> {
-        let config = Config::load();
-        let src = self.task_folder()?.join("src");
-        fs::create_dir_all(&src)?;
-        fs::copy(config.templates.join("main.rs"), src.join("main.rs"))
-            .with_context(|| "Cannot copy template main file")?;
+        fs::create_dir_all(self.task_folder()?.join("src"))?;
+
+        let rendered_cargo = Template::render_cargo(self)?;
+        let cargo_file = self.task_folder()?.join("Cargo.toml");
+        fs::write(cargo_file, rendered_cargo)?;
+
+        let rendered_main = Template::render_main(self)?;
+        let main_file = self.task_folder()?.join("src").join("main.rs");
+        fs::write(main_file, rendered_main)?;
+
         Ok(())
     }
     fn setup_metadata(&self) -> anyhow::Result<()> {
@@ -78,12 +89,6 @@ impl Task {
         fs::write(metadata_file, serde_json::to_string(&self)?)?;
         History::add_task(self.clone())?;
         Ok(())
-    }
-    fn task_name(&self) -> String {
-        match &self.languages {
-            Languages::Java(lang) => &lang.task_class,
-        }
-        .to_snake_case()
     }
 }
 
