@@ -1,9 +1,33 @@
+use std::path::PathBuf;
+
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Config {
     pub user_name: String,
     pub password: String,
+    pub workspace: PathBuf,
+    pub history: PathBuf,
+    pub history_limit: usize,
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Self {
+            user_name: "".into(),
+            password: "".into(),
+            workspace: std::env::current_dir()
+                .with_context(|| "Cannot get current directory")
+                .unwrap()
+                .join("contests"),
+            history: dirs::data_dir()
+                .with_context(|| "Cannot get data directory for saving history file")
+                .unwrap()
+                .join("history.json"),
+            history_limit: 1000,
+        }
+    }
 }
 
 impl Config {
