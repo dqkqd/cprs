@@ -1,6 +1,7 @@
 use std::{fs, path::PathBuf};
 
 use anyhow::Context;
+use heck::ToSnakeCase;
 use serde::{Deserialize, Serialize};
 
 use crate::{config::Config, history::History, utils::println_to_console};
@@ -27,14 +28,11 @@ impl PartialEq for Task {
 impl Eq for Task {}
 
 impl Task {
-    pub fn metadata_file(&self) -> PathBuf {
-        self.task_folder().unwrap().join("task_desc.json")
-    }
     pub fn summary(&self) -> String {
         format!("Task `{}`, from `{}`", &self.name, &self.url)
     }
     pub fn task_folder(&self) -> anyhow::Result<PathBuf> {
-        let normalize = |s: &str| s.trim().replace("  ", " ").replace(" ", "_").to_lowercase();
+        let normalize = |s: &str| s.trim().to_snake_case();
         let mut iter = self.group.split('-').map(normalize);
         let site = iter
             .next()
@@ -42,19 +40,21 @@ impl Task {
         let contest_name = iter
             .next()
             .with_context(|| format!("Cannot get contest name from {}", &self.group))?;
-        let task_name = match &self.languages {
-            Languages::Java(lang) => &lang.task_class,
-        };
         Ok(Config::load()
             .workspace
             .join(site)
             .join(contest_name)
-            .join(task_name))
+            .join(self.task_name()))
     }
     pub fn setup(&self) -> anyhow::Result<()> {
-        let config = Config::load();
-        let task_folder = self.task_folder()?;
-        let test_folder = task_folder.join("tests");
+        self.setup_testcases()?;
+        self.setup_templates()?;
+        self.setup_metadata()?;
+        println_to_console(format!("Task created: {}", self.summary()));
+        Ok(())
+    }
+    fn setup_testcases(&self) -> anyhow::Result<()> {
+        let test_folder = self.task_folder()?.join("tests");
         fs::create_dir_all(&test_folder)?;
         for (i, test_case) in self.tests.iter().enumerate() {
             let case_name = format!("case_{:02}", i + 1);
@@ -63,14 +63,27 @@ impl Task {
             fs::write(input, &test_case.input)?;
             fs::write(output, &test_case.output)?;
         }
-        let src = task_folder.join("src");
+        Ok(())
+    }
+    fn setup_templates(&self) -> anyhow::Result<()> {
+        let config = Config::load();
+        let src = self.task_folder()?.join("src");
         fs::create_dir_all(&src)?;
         fs::copy(config.templates.join("main.rs"), src.join("main.rs"))
             .with_context(|| "Cannot copy template main file")?;
-        fs::write(self.metadata_file(), serde_json::to_string(&self)?)?;
-        println_to_console(format!("Task created: `{}`", task_folder.display()));
+        Ok(())
+    }
+    fn setup_metadata(&self) -> anyhow::Result<()> {
+        let metadata_file = self.task_folder().unwrap().join("task_desc.json");
+        fs::write(metadata_file, serde_json::to_string(&self)?)?;
         History::add_task(self.clone())?;
         Ok(())
+    }
+    fn task_name(&self) -> String {
+        match &self.languages {
+            Languages::Java(lang) => &lang.task_class,
+        }
+        .to_snake_case()
     }
 }
 
