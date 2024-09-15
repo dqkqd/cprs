@@ -3,6 +3,7 @@ mod cmd;
 mod init;
 mod list;
 mod listen;
+mod setup;
 
 pub use cmd::Cmd;
 
