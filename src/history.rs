@@ -60,4 +60,12 @@ impl History {
             .take(count)
             .collect()
     }
+    pub fn get_task(task_id: usize) -> anyhow::Result<Task> {
+        let history = History::load().unwrap_or_default();
+        history
+            .tasks
+            .get(task_id)
+            .with_context(|| format!("There is no task with id: {task_id}"))
+            .cloned()
+    }
 }
