@@ -1,6 +1,5 @@
-use clap::Parser;
-use cprs_cli::cli::Cli;
+use cprs_cli::Cmd;
 
 fn main() -> anyhow::Result<()> {
-    Cli::parse().run()
+    Cmd::entry_point()
 }
