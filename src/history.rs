@@ -52,12 +52,12 @@ impl History {
         history.save()?;
         Ok(())
     }
-    fn get_latest_tasks(len: usize) -> Vec<Task> {
+    pub fn get_latest_tasks(count: usize) -> Vec<Task> {
         History::load()
             .unwrap_or_default()
             .tasks
             .into_iter()
-            .take(len)
+            .take(count)
             .collect()
     }
 }
