@@ -1,5 +1,5 @@
 use clap::Parser;
-use cprs::cli::Cli;
+use cprs_cli::cli::Cli;
 
 fn main() {
     let args = Cli::parse();
