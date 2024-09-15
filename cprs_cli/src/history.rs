@@ -3,11 +3,14 @@ use std::collections::VecDeque;
 use anyhow::Context;
 use serde::{Deserialize, Serialize};
 
-use crate::{config::Config, task::Task};
+use crate::{
+    config::Config,
+    task::{Task, TaskRaw},
+};
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 pub struct History {
-    tasks: VecDeque<Task>,
+    tasks: VecDeque<TaskRaw>,
 }
 
 impl History {
@@ -30,9 +33,8 @@ impl History {
         Ok(())
     }
     pub fn add_task(task: Task) -> anyhow::Result<()> {
-        let config = Config::load();
         let mut history = History::load()?;
-        match history.tasks.iter().position(|t| t == &task) {
+        match history.tasks.iter().position(|t| t.url == task.raw.url) {
             Some(0) => {
                 // already added at the latest position, do nothing
                 return Ok(());
@@ -45,10 +47,10 @@ impl History {
                 // not existed, do nothing
             }
         }
-        if history.tasks.len() >= config.history_limit {
+        if history.tasks.len() >= task.config.history_limit {
             history.tasks.pop_back();
         }
-        history.tasks.push_front(task);
+        history.tasks.push_front(task.raw);
         history.save()?;
         Ok(())
     }
@@ -58,14 +60,16 @@ impl History {
             .tasks
             .into_iter()
             .take(count)
+            .map(Task::from)
             .collect()
     }
     pub fn get_task(task_id: usize) -> anyhow::Result<Task> {
-        let history = History::load().unwrap_or_default();
-        history
+        History::load()
+            .unwrap_or_default()
             .tasks
             .get(task_id)
-            .with_context(|| format!("There is no task with id: {task_id}"))
             .cloned()
+            .map(Task::from)
+            .with_context(|| format!("There is no task with id: {task_id}"))
     }
 }

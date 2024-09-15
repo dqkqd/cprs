@@ -5,7 +5,7 @@ use std::{
 
 use anyhow::Context;
 
-use crate::{config::Config, task::Task};
+use crate::{config::Config, task::{Task, TaskRaw}};
 
 pub fn listen() {
     let config = Config::load();
@@ -25,11 +25,12 @@ fn handle_stream(mut stream: TcpStream) {
         .skip_while(|line| !line.is_empty())
         .last();
 
-    let task: Task = match task_raw_description {
+    let task_raw: TaskRaw = match task_raw_description {
         Some(description) => serde_json::from_str(&description).unwrap(),
         None => todo!(),
     };
+    let task = Task::from(task_raw);
     task.setup()
-        .with_context(|| format!("Cannot setup task {}", &task.name))
+        .with_context(|| format!("Cannot setup task {}", &task.raw.name))
         .unwrap();
 }
