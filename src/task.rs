@@ -1,10 +1,9 @@
 use std::{fs, path::PathBuf};
 
 use anyhow::Context;
-use crossterm::{execute, style::Print};
 use serde::{Deserialize, Serialize};
 
-use crate::{config::Config, history::History};
+use crate::{config::Config, history::History, utils::println_to_console};
 
 // https://github.com/jmerle/competitive-companion?tab=readme-ov-file#the-format
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,7 +27,10 @@ impl PartialEq for Task {
 impl Eq for Task {}
 
 impl Task {
-    fn task_folder(&self) -> anyhow::Result<PathBuf> {
+    pub fn summary(&self) -> String {
+        format!("Task `{}`, from `{}`", &self.name, &self.url)
+    }
+    pub fn task_folder(&self) -> anyhow::Result<PathBuf> {
         let normalize = |s: &str| s.trim().replace("  ", " ").replace(" ", "_").to_lowercase();
         let mut iter = self.group.split('-').map(normalize);
         let site = iter
@@ -57,10 +59,7 @@ impl Task {
             fs::write(input, &test_case.input)?;
             fs::write(output, &test_case.output)?;
         }
-        execute!(
-            std::io::stdout(),
-            Print(format!("Task created: `{}`\n", task_folder.display())),
-        )?;
+        println_to_console(format!("Task created: `{}`", task_folder.display()));
         History::add_task(self.clone())?;
         Ok(())
     }
