@@ -1,3 +1,4 @@
+mod build;
 mod cd;
 mod cmd;
 mod init;

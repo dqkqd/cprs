@@ -11,6 +11,7 @@ pub enum Cmd {
     Listen(Listen),
     List(List),
     Cd(Cd),
+    Build(Build),
 }
 
 #[derive(Parser)]
@@ -32,6 +33,9 @@ pub struct Cd {
     pub task_id: usize,
 }
 
+#[derive(Parser)]
+pub struct Build;
+
 impl Cmd {
     pub async fn entry_point() -> Result<()> {
         Cmd::parse().run().await
@@ -46,6 +50,7 @@ impl Run for Cmd {
             Cmd::List(list) => list.run().await?,
             Cmd::Cd(cd) => cd.run().await?,
             Cmd::Setup(setup) => setup.run().await?,
+            Cmd::Build(build) => build.run().await?,
         }
         Ok(())
     }

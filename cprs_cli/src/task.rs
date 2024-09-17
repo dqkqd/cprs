@@ -71,6 +71,11 @@ impl From<TaskRaw> for Task {
             config,
             task_name,
             task_folder,
+            src_folder,
+            test_folder,
+            cargo_file,
+            main_file,
+            metadata_file,
         }
     }
 }
@@ -85,6 +90,15 @@ impl Task {
         self.setup_metadata().await?;
         println_to_console(format!("Task created: {}", self.summary()));
         Ok(())
+    }
+    pub async fn from_current_dir() -> Result<Task> {
+        let task_description_file = std::env::current_dir()?.join("task_desc.json");
+        let task_raw_description = fs::read_to_string(task_description_file)
+            .await
+            .with_context(|| "Cannot get task description")?;
+        let task_raw: TaskRaw = serde_json::from_str(&task_raw_description)?;
+        let task = Task::from(task_raw);
+        Ok(task)
     }
     async fn setup_testcases(&self) -> Result<()> {
         fs::create_dir_all(&self.test_folder).await?;
