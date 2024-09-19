@@ -32,6 +32,7 @@ pub struct Task {
     pub test_folder: PathBuf,
     pub cargo_file: PathBuf,
     pub main_file: PathBuf,
+    pub submit_file: PathBuf,
     pub metadata_file: PathBuf,
 }
 
@@ -66,6 +67,9 @@ impl From<TaskRaw> for Task {
         let main_file = src_folder.join("main.rs");
         let metadata_file = task_folder.join("task_desc.json");
 
+        let bin_folder = src_folder.join("bin");
+        let submit_file = bin_folder.join("submit.rs");
+
         Self {
             raw,
             config,
@@ -75,6 +79,7 @@ impl From<TaskRaw> for Task {
             test_folder,
             cargo_file,
             main_file,
+            submit_file,
             metadata_file,
         }
     }
@@ -85,6 +90,7 @@ impl Task {
         format!("Task `{}`, from `{}`", &self.raw.name, &self.raw.url)
     }
     pub async fn setup(&self) -> Result<()> {
+        self.setup_folders().await?;
         self.setup_testcases().await?;
         self.setup_templates().await?;
         self.setup_metadata().await?;
@@ -100,8 +106,16 @@ impl Task {
         let task = Task::from(task_raw);
         Ok(task)
     }
-    async fn setup_testcases(&self) -> Result<()> {
+    async fn setup_folders(&self) -> Result<()> {
+        fs::create_dir_all(&self.task_folder).await?;
+        fs::create_dir_all(&self.src_folder).await?;
         fs::create_dir_all(&self.test_folder).await?;
+        if let Some(submit_folder) = &self.submit_file.parent() {
+            fs::create_dir_all(submit_folder).await?;
+        }
+        Ok(())
+    }
+    async fn setup_testcases(&self) -> Result<()> {
         for (i, test_case) in self.raw.tests.iter().enumerate() {
             let case_name = format!("case_{:02}", i + 1);
             let input = self.test_folder.join(format!("{case_name}.in"));
