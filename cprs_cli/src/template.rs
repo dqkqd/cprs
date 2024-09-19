@@ -1,5 +1,3 @@
-use std::fs;
-
 use anyhow::{Context, Result};
 use minijinja::{context, path_loader, Environment};
 
@@ -24,7 +22,23 @@ impl Template {
     }
 
     pub fn render_main(task: &Task) -> Result<String> {
-        let rendered = fs::read_to_string(task.config.templates.join("template_main.rs"))?;
+        let mut env = Environment::new();
+        env.set_loader(path_loader(&task.config.templates));
+
+        let testcases = task
+            .raw
+            .tests
+            .iter()
+            .enumerate()
+            .map(|(id, case)| {
+                let case_name = format!("case_{:02}", id + 1);
+                (case_name, &case.input, &case.output)
+            })
+            .collect::<Vec<_>>();
+        let template = env.get_template("template_main.rs")?;
+        let rendered = template.render(context! {
+            testcases => testcases,
+        })?;
         Ok(rendered)
     }
 }

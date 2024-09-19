@@ -17,7 +17,7 @@ pub struct TaskRaw {
     interactive: bool,
     memory_limit: u16,
     time_limit: u16,
-    tests: Vec<TestCase>,
+    pub tests: Vec<TestCase>,
     test_type: TestType,
     languages: Languages,
 }
@@ -144,9 +144,9 @@ impl Task {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-struct TestCase {
-    input: String,
-    output: String,
+pub struct TestCase {
+    pub input: String,
+    pub output: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
