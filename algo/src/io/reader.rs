@@ -23,22 +23,21 @@ impl<R: Read> Reader<R> {
         self.skip_whitespaces().unwrap();
         let mut raw = Vec::new();
         self.read_until_whitespace(&mut raw).unwrap();
+        if raw.last().is_some_and(|c| c.is_ascii_whitespace()) {
+            raw.pop();
+        }
         let data = String::from_utf8(raw).unwrap();
         FromStr::from_str(&data).unwrap()
     }
     fn skip_whitespaces(&mut self) -> std::io::Result<usize> {
-        skip_while(&mut self.buf_reader, |c| c.is_ascii_whitespace())
+        skip_whitespaces(&mut self.buf_reader)
     }
     fn read_until_whitespace(&mut self, buf: &mut Vec<u8>) -> std::io::Result<usize> {
-        take_while(&mut self.buf_reader, buf, |c| c.is_ascii_whitespace())
+        read_until_whitespace(&mut self.buf_reader, buf)
     }
 }
 
-fn take_while<R, P>(r: &mut BufReader<R>, buf: &mut Vec<u8>, predicate: P) -> std::io::Result<usize>
-where
-    R: Read,
-    P: Fn(&u8) -> bool,
-{
+fn skip_whitespaces<R: BufRead + ?Sized>(r: &mut R) -> std::io::Result<usize> {
     let mut read = 0;
     loop {
         let (done, used) = {
@@ -46,15 +45,9 @@ where
                 Ok(n) => n,
                 Err(e) => return Err(e),
             };
-            match available.iter().position(&predicate) {
-                Some(i) if i > 0 => {
-                    buf.extend_from_slice(&available[..=i - 1]);
-                    (true, i)
-                }
-                _ => {
-                    buf.extend_from_slice(available);
-                    (false, available.len())
-                }
+            match available.iter().position(|c| !c.is_ascii_whitespace()) {
+                Some(i) => (true, i),
+                None => (false, available.len()),
             }
         };
         r.consume(used);
@@ -65,11 +58,10 @@ where
     }
 }
 
-fn skip_while<R, P>(r: &mut BufReader<R>, predicate: P) -> std::io::Result<usize>
-where
-    R: Read,
-    P: Fn(&u8) -> bool,
-{
+fn read_until_whitespace<R: BufRead + ?Sized>(
+    r: &mut R,
+    buf: &mut Vec<u8>,
+) -> std::io::Result<usize> {
     let mut read = 0;
     loop {
         let (done, used) = {
@@ -77,9 +69,15 @@ where
                 Ok(n) => n,
                 Err(e) => return Err(e),
             };
-            match available.iter().position(|c| !predicate(c)) {
-                Some(i) => (true, i),
-                None => (false, available.len()),
+            match available.iter().position(|c| c.is_ascii_whitespace()) {
+                Some(i) => {
+                    buf.extend_from_slice(&available[..=i]);
+                    (true, i + 1)
+                }
+                None => {
+                    buf.extend_from_slice(available);
+                    (false, available.len())
+                }
             }
         };
         r.consume(used);
