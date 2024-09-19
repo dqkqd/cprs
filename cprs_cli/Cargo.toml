@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.88"
+arboard = { version = "3.4.0", features = ["wayland-data-control"] }
 cargo_metadata = "0.18.1"
 clap = { version = "4.5.17", features = ["derive"] }
 confy = "0.6.1"

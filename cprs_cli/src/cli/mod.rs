@@ -5,6 +5,7 @@ mod init;
 mod list;
 mod listen;
 mod setup;
+mod submit;
 
 pub use cmd::Cmd;
 
