@@ -27,6 +27,17 @@ pub fn bundle_task(task: &Task) -> Result<String> {
             syntax_tree.items.push(lib_mod);
         }
     }
+
+    // put test code at the end of the block
+    let testcode = syntax_tree
+        .items
+        .iter()
+        .filter(|item| is_attr_test(item))
+        .cloned()
+        .collect::<Vec<_>>();
+    syntax_tree.items.retain(|item| !is_attr_test(item));
+    syntax_tree.items.extend(testcode);
+
     let code = syntax_tree.into_token_stream().to_string();
     let code = prettify(&code)?;
     Ok(code)
