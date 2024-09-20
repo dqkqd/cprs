@@ -1,7 +1,4 @@
-use std::{
-    fmt::Display,
-    io::{BufWriter, Write},
-};
+use std::io::{BufWriter, Write};
 
 pub struct Writer<W: Write> {
     buf_writer: BufWriter<W>,
@@ -13,13 +10,15 @@ impl<W: Write> Writer<W> {
             buf_writer: BufWriter::with_capacity(1024, inner),
         }
     }
-    pub fn write<T: Display>(&mut self, data: T) {
-        let data = data.to_string();
-        self.buf_writer.write_all(data.as_bytes()).unwrap();
+}
+
+impl<W: Write> Write for Writer<W> {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.buf_writer.write(buf)
     }
-    pub fn write_line<T: Display>(&mut self, data: T) {
-        let data = data.to_string() + "\n";
-        self.buf_writer.write_all(data.as_bytes()).unwrap();
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        self.buf_writer.flush()
     }
 }
 
@@ -28,23 +27,16 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_write_int() {
-        let mut writer = Writer::new(Vec::new());
-        writer.write(123);
-        assert_eq!(writer.buf_writer.into_inner().unwrap(), b"123");
-    }
-
-    #[test]
     fn test_write_string() {
         let mut writer = Writer::new(Vec::new());
-        writer.write("123");
+        write!(writer, "123").unwrap();
         assert_eq!(writer.buf_writer.into_inner().unwrap(), b"123");
     }
 
     #[test]
     fn test_write_line_int() {
         let mut writer = Writer::new(Vec::new());
-        writer.write_line(123);
+        writeln!(writer, "123").unwrap();
         assert_eq!(writer.buf_writer.into_inner().unwrap(), b"123\n");
     }
 }
