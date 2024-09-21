@@ -1,0 +1,12 @@
+{
+  "name": "2 Sat",
+  "group": "Library Checker",
+  "url": "https://judge.yosupo.jp/problem/two_sat",
+  "interactive": false,
+  "memoryLimit": 1024,
+  "timeLimit": 5000,
+  "tests": [],
+  "testType": "single",
+  "languages": { "java": { "mainClass": "Main", "taskClass": "Sat" } }
+}
+
