@@ -1,6 +1,7 @@
 use std::{io::Write, path::Path, process};
 
 pub mod bundler;
+mod extracter;
 mod loader;
 
 use anyhow::{Context, Result};
