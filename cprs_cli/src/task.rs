@@ -45,20 +45,11 @@ impl From<TaskRaw> for Task {
         }
         .to_snake_case();
 
-        let normalize = |s: &str| s.trim().to_snake_case();
-        let mut iter = raw.group.split('-').map(normalize);
-        let contest_site = iter
-            .next()
-            .with_context(|| format!("Cannot get contest site from {}", &raw.group))
-            .unwrap();
-        let contest_name = iter
-            .next()
-            .with_context(|| format!("Cannot get contest name from {}", &raw.group))
-            .unwrap();
-        let task_folder = config
-            .workspace
-            .join(contest_site)
-            .join(contest_name)
+        let task_folder = raw
+            .group
+            .split('-')
+            .map(|group_name: &str| group_name.trim().to_snake_case())
+            .fold(config.workspace.clone(), |path, folder| path.join(folder))
             .join(&task_name);
 
         let src_folder = task_folder.join("src");
