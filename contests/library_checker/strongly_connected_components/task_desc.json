@@ -1,0 +1,1 @@
+{"name":"Strongly Connected Components","group":"Library Checker","url":"https://judge.yosupo.jp/problem/scc","interactive":false,"memoryLimit":1024,"timeLimit":5000,"tests":[],"testType":"single","languages":{"java":{"mainClass":"Main","taskClass":"StronglyConnectedComponents"}}}

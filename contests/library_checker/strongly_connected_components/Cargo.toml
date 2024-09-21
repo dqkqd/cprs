@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "strongly_connected_components"
+version = "0.1.0"
+edition = "2021"
+default-run = "strongly_connected_components"
+
+[dependencies]
+algo = { path = "../../../algo" }
