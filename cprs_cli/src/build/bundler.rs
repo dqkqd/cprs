@@ -12,7 +12,7 @@ use crate::{
     task::Task,
 };
 
-use super::extracter::Extracter;
+use super::extracter::Extractor;
 
 pub fn bundle_task(task: &Task) -> Result<String> {
     let (main, libs) = select_main_and_libs(&task.task_folder);
@@ -114,7 +114,7 @@ impl<'s> Bundler<'s> {
 
         let mut required_files: HashSet<PathBuf> = HashSet::new();
         let path = self.current_path.unwrap();
-        let mut extracter = Extracter {
+        let mut extracter = Extractor {
             lib_path: path,
             current_path: path,
             files: Vec::new(),
@@ -131,7 +131,7 @@ impl<'s> Bundler<'s> {
             assert!(p.is_file());
             let content = read_file(&p).unwrap();
             let mut syntax = syn::parse_file(&content).unwrap();
-            let mut extracter = Extracter {
+            let mut extracter = Extractor {
                 lib_path: path,
                 current_path: p.parent().unwrap(),
                 files: Vec::new(),

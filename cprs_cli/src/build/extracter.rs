@@ -3,13 +3,13 @@ use std::path::{Path, PathBuf};
 use syn::visit_mut::VisitMut;
 use walkdir::WalkDir;
 
-pub struct Extracter<'a> {
+pub struct Extractor<'a> {
     pub lib_path: &'a Path,
     pub current_path: &'a Path,
     pub files: Vec<PathBuf>,
 }
 
-impl<'a> Extracter<'a> {
+impl<'a> Extractor<'a> {
     fn add_file(&mut self, ident: &syn::Ident) {
         self.add_path(self.current_path.join(ident.to_string()));
     }
@@ -28,7 +28,7 @@ impl<'a> Extracter<'a> {
                 } else {
                     self.current_path
                 };
-                let mut extracter = Extracter {
+                let mut extracter = Extractor {
                     lib_path: self.lib_path,
                     current_path,
                     files: Vec::new(),
@@ -41,7 +41,7 @@ impl<'a> Extracter<'a> {
     }
 
     fn collect_required_files_from_use_path(&mut self, node: &mut syn::UsePath) {
-        let mut extracter = Extracter {
+        let mut extracter = Extractor {
             lib_path: self.lib_path,
             current_path: &self.current_path.join(node.ident.to_string()),
             files: Vec::new(),
@@ -55,7 +55,7 @@ impl<'a> Extracter<'a> {
     }
 }
 
-impl<'a> VisitMut for Extracter<'a> {
+impl<'a> VisitMut for Extractor<'a> {
     fn visit_file_mut(&mut self, node: &mut syn::File) {
         self.remove_non_use_path(node);
         for it in &mut node.items {
