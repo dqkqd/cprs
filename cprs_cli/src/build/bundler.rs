@@ -1,10 +1,10 @@
 use anyhow::{Context, Result};
 use std::{
-    collections::{HashSet, VecDeque},
+    collections::{HashMap, HashSet, VecDeque},
     ops::DerefMut,
     path::{Path, PathBuf},
 };
-use syn::{__private::ToTokens, visit_mut::VisitMut};
+use syn::{__private::ToTokens, punctuated::Punctuated, visit_mut::VisitMut};
 use walkdir::WalkDir;
 
 use crate::{
@@ -12,18 +12,22 @@ use crate::{
     task::Task,
 };
 
-use super::extracter::Extractor;
+use super::extracter::{get_all_macros, Extractor};
 
 pub fn bundle_task(task: &Task) -> Result<String> {
     let (main, libs) = select_main_and_libs(&task.task_folder);
     let content = read_file(&main.src_path)?;
     let mut syntax_tree = syn::parse_file(&content)?;
+
+    let mut macros = HashMap::new();
     for lib in libs {
         let lib_path = lib
             .src_path
             .parent()
             .with_context(|| format!("Cannot file parent for {}", lib.src_path))?
             .as_std_path();
+
+        let lib_macros = get_all_macros(lib_path);
 
         let config = BundlerConfig {
             remove_tests: false,
@@ -32,9 +36,11 @@ pub fn bundle_task(task: &Task) -> Result<String> {
         };
         let mut bundler = Bundler::with_config(config)
             .with_lib(&lib.name)
-            .with_path(lib_path);
+            .with_path(lib_path)
+            .with_macro(lib_macros);
         bundler.visit_file_mut(&mut syn::parse_file(&content)?);
 
+        macros.extend(bundler.macros.into_iter());
         let required_files = bundler.required_files;
         if let Ok(lib_mod) = create_mod(&lib.name, lib_path, &lib.name, &required_files) {
             syntax_tree.items.push(lib_mod);
@@ -46,7 +52,9 @@ pub fn bundle_task(task: &Task) -> Result<String> {
         move_tests_to_the_end: true,
         rename_crate_to_lib_name: false,
     };
-    Bundler::with_config(config).visit_file_mut(&mut syntax_tree);
+    Bundler::with_config(config)
+        .with_macro(macros)
+        .visit_file_mut(&mut syntax_tree);
 
     let code = syntax_tree.into_token_stream().to_string();
     let code = prettify(&code)?;
@@ -66,6 +74,7 @@ pub struct Bundler<'s> {
     current_path: Option<&'s Path>,
     config: BundlerConfig,
     required_files: Vec<PathBuf>,
+    macros: HashMap<String, PathBuf>,
 }
 
 impl<'s> Bundler<'s> {
@@ -83,6 +92,11 @@ impl<'s> Bundler<'s> {
 
     fn with_path(mut self, path: &'s Path) -> Bundler<'s> {
         self.current_path = Some(path);
+        self
+    }
+
+    fn with_macro(mut self, macros: HashMap<String, PathBuf>) -> Bundler<'s> {
+        self.macros = macros;
         self
     }
 
@@ -118,6 +132,7 @@ impl<'s> Bundler<'s> {
             lib_path: path,
             current_path: path,
             files: Vec::new(),
+            macros: &mut self.macros,
         };
         extracter.visit_use_tree_mut(&mut node.tree.clone());
 
@@ -135,6 +150,7 @@ impl<'s> Bundler<'s> {
                 lib_path: path,
                 current_path: p.parent().unwrap(),
                 files: Vec::new(),
+                macros: &mut self.macros,
             };
             extracter.visit_file_mut(&mut syntax);
             processing_paths.extend(extracter.files);
@@ -152,6 +168,29 @@ impl<'s> Bundler<'s> {
             let test_nodes = self.extract_test_nodes(node);
             node.items.extend(test_nodes);
         }
+    }
+
+    fn contains_macro_name(&mut self, node: &syn::UseTree) -> bool {
+        match node {
+            syn::UseTree::Name(name) => self.macros.contains_key(&name.ident.to_string()),
+            _ => false,
+        }
+    }
+
+    fn handle_remove_use_macro_in_file(&mut self, node: &mut syn::File) {
+        node.items.retain(|item| match item {
+            syn::Item::Use(item) => !self.contains_macro_name(&item.tree),
+            _ => true,
+        })
+    }
+
+    fn handle_remove_use_macro_in_group(&mut self, node: &mut syn::UseGroup) {
+        node.items = node
+            .items
+            .clone()
+            .into_iter()
+            .filter(|item| !self.contains_macro_name(item))
+            .collect();
     }
 
     fn handle_rename_crate_to_lib(&mut self, node: &mut syn::UsePath) {
@@ -192,6 +231,7 @@ impl<'s> VisitMut for Bundler<'s> {
             self.visit_attribute_mut(it);
         }
         self.handle_tests(node);
+        self.handle_remove_use_macro_in_file(node);
         for it in &mut node.items {
             self.visit_item_mut(it);
         }
@@ -202,6 +242,14 @@ impl<'s> VisitMut for Bundler<'s> {
         self.visit_ident_mut(&mut node.ident);
         self.collect_required_files(node);
         self.visit_use_tree_mut(&mut node.tree);
+    }
+
+    fn visit_use_group_mut(&mut self, node: &mut syn::UseGroup) {
+        self.handle_remove_use_macro_in_group(node);
+        for mut el in Punctuated::pairs_mut(&mut node.items) {
+            let it = el.value_mut();
+            self.visit_use_tree_mut(it);
+        }
     }
 }
 
