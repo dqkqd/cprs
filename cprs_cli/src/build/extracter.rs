@@ -23,9 +23,14 @@ impl<'a> Extracter<'a> {
         assert!(matches!(node.tree, syn::UseTree::Path(_)));
         if let syn::UseTree::Path(ref path) = node.tree {
             if path.ident == "crate" || path.ident == "super" {
+                let current_path = if path.ident == "crate" {
+                    self.lib_path
+                } else {
+                    self.current_path
+                };
                 let mut extracter = Extracter {
                     lib_path: self.lib_path,
-                    current_path: self.current_path,
+                    current_path,
                     files: Vec::new(),
                 };
                 let mut path = path.clone();

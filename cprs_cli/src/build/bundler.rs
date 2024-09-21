@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use std::{
     collections::{HashSet, VecDeque},
+    ops::DerefMut,
     path::{Path, PathBuf},
 };
 use syn::{__private::ToTokens, visit_mut::VisitMut};
@@ -27,6 +28,7 @@ pub fn bundle_task(task: &Task) -> Result<String> {
         let config = BundlerConfig {
             remove_tests: false,
             move_tests_to_the_end: true,
+            rename_crate_to_lib_name: false,
         };
         let mut bundler = Bundler::with_config(config)
             .with_lib(&lib.name)
@@ -34,7 +36,7 @@ pub fn bundle_task(task: &Task) -> Result<String> {
         bundler.visit_file_mut(&mut syn::parse_file(&content)?);
 
         let required_files = bundler.required_files;
-        if let Ok(lib_mod) = create_mod(lib_path, &lib.name, &required_files) {
+        if let Ok(lib_mod) = create_mod(&lib.name, lib_path, &lib.name, &required_files) {
             syntax_tree.items.push(lib_mod);
         }
     }
@@ -42,6 +44,7 @@ pub fn bundle_task(task: &Task) -> Result<String> {
     let config = BundlerConfig {
         remove_tests: false,
         move_tests_to_the_end: true,
+        rename_crate_to_lib_name: false,
     };
     Bundler::with_config(config).visit_file_mut(&mut syntax_tree);
 
@@ -54,6 +57,7 @@ pub fn bundle_task(task: &Task) -> Result<String> {
 pub struct BundlerConfig {
     remove_tests: bool,
     move_tests_to_the_end: bool,
+    rename_crate_to_lib_name: bool,
 }
 
 #[derive(Default)]
@@ -149,6 +153,37 @@ impl<'s> Bundler<'s> {
             node.items.extend(test_nodes);
         }
     }
+
+    fn handle_rename_crate_to_lib(&mut self, node: &mut syn::UsePath) {
+        if self.config.rename_crate_to_lib_name
+            && node.ident == "crate"
+            && self.current_lib.is_some()
+        {
+            let code = format!("{}::*", self.current_lib.unwrap());
+            match syn::parse_str::<syn::UseTree>(&code) {
+                Ok(syn::UseTree::Path(mut new_use_path)) => {
+                    // before:
+                    // code = lib_name::*
+                    // node = crate::something
+                    // node.tree = something
+                    //
+                    // after swap
+                    // code = lib_name::something
+                    // node = crate::*
+                    // node.tree = *
+                    //
+                    // after replace
+                    // code = Empty
+                    // node = crate::lib_name::something
+                    // node.tree = lib_name::something
+                    std::mem::swap(new_use_path.tree.deref_mut(), node.tree.deref_mut());
+                    let _ =
+                        std::mem::replace(node.tree.deref_mut(), syn::UseTree::Path(new_use_path));
+                }
+                _ => unreachable!(),
+            }
+        }
+    }
 }
 
 impl<'s> VisitMut for Bundler<'s> {
@@ -163,6 +198,7 @@ impl<'s> VisitMut for Bundler<'s> {
     }
 
     fn visit_use_path_mut(&mut self, node: &mut syn::UsePath) {
+        self.handle_rename_crate_to_lib(node);
         self.visit_ident_mut(&mut node.ident);
         self.collect_required_files(node);
         self.visit_use_tree_mut(&mut node.tree);
@@ -170,6 +206,7 @@ impl<'s> VisitMut for Bundler<'s> {
 }
 
 fn create_mod<P: AsRef<Path>>(
+    lib_name: &str,
     base_path: P,
     mod_name: &str,
     required_files: &[PathBuf],
@@ -186,13 +223,18 @@ fn create_mod<P: AsRef<Path>>(
         let config = BundlerConfig {
             remove_tests: true,
             move_tests_to_the_end: false,
+            rename_crate_to_lib_name: true,
         };
-        Bundler::with_config(config).visit_file_mut(&mut syntax);
+        Bundler::with_config(config)
+            .with_lib(lib_name)
+            .with_path(base_path.as_ref())
+            .visit_file_mut(&mut syntax);
 
         items.extend(syntax.items);
     }
 
     for entry in WalkDir::new(&base_path)
+        .sort_by_file_name()
         .min_depth(1)
         .max_depth(1)
         .into_iter()
@@ -210,7 +252,7 @@ fn create_mod<P: AsRef<Path>>(
         let local_mod = required_files
             .iter()
             .filter(|file| file.starts_with(entry.path()))
-            .filter_map(|_| create_mod(entry.path(), local_name, required_files).ok())
+            .filter_map(|_| create_mod(lib_name, entry.path(), local_name, required_files).ok())
             .next();
         if let Some(local_mod) = local_mod {
             items.push(local_mod);
