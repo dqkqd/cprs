@@ -3,13 +3,57 @@ use std::{
     collections::{HashSet, VecDeque},
     path::{Path, PathBuf},
 };
-use syn::__private::ToTokens;
+use syn::{__private::ToTokens, visit_mut::VisitMut};
 use walkdir::WalkDir;
 
 use crate::{
     build::{loader::select_main_and_libs, prettify, read_file},
     task::Task,
 };
+
+#[derive(Default)]
+pub struct BundlerConfig {
+    remove_tests: bool,
+    move_tests_to_the_end: bool,
+}
+
+pub struct Bundler {
+    config: BundlerConfig,
+}
+
+impl Bundler {
+    fn extract_test_nodes(&mut self, node: &mut syn::File) -> Vec<syn::Item> {
+        let test_nodes = node
+            .items
+            .iter()
+            .filter(|item| is_attr_test(item))
+            .cloned()
+            .collect::<Vec<_>>();
+        node.items.retain(|item| !is_attr_test(item));
+        test_nodes
+    }
+
+    fn handle_tests(&mut self, node: &mut syn::File) {
+        if self.config.remove_tests {
+            self.extract_test_nodes(node);
+        } else if self.config.move_tests_to_the_end {
+            let test_nodes = self.extract_test_nodes(node);
+            node.items.extend(test_nodes);
+        }
+    }
+}
+
+impl VisitMut for Bundler {
+    fn visit_file_mut(&mut self, node: &mut syn::File) {
+        for it in &mut node.attrs {
+            self.visit_attribute_mut(it);
+        }
+        self.handle_tests(node);
+        for it in &mut node.items {
+            self.visit_item_mut(it);
+        }
+    }
+}
 
 pub fn bundle_task(task: &Task) -> Result<String> {
     let (main, libs) = select_main_and_libs(&task.task_folder);
@@ -28,15 +72,11 @@ pub fn bundle_task(task: &Task) -> Result<String> {
         }
     }
 
-    // put test code at the end of the block
-    let testcode = syntax_tree
-        .items
-        .iter()
-        .filter(|item| is_attr_test(item))
-        .cloned()
-        .collect::<Vec<_>>();
-    syntax_tree.items.retain(|item| !is_attr_test(item));
-    syntax_tree.items.extend(testcode);
+    let config = BundlerConfig {
+        remove_tests: false,
+        move_tests_to_the_end: true,
+    };
+    Bundler { config }.visit_file_mut(&mut syntax_tree);
 
     let code = syntax_tree.into_token_stream().to_string();
     let code = prettify(&code)?;
@@ -55,8 +95,15 @@ fn create_mod<P: AsRef<Path>>(
     file.set_extension("rs");
     if file.is_file() {
         let content = read_file(&file)?;
-        let syntax = syn::parse_file(&content)?;
-        items.extend(syntax.items.into_iter().filter(|item| !is_attr_test(item)))
+        let mut syntax = syn::parse_file(&content)?;
+
+        let config = BundlerConfig {
+            remove_tests: true,
+            move_tests_to_the_end: false,
+        };
+        Bundler { config }.visit_file_mut(&mut syntax);
+
+        items.extend(syntax.items);
     }
 
     for entry in WalkDir::new(&base_path)
