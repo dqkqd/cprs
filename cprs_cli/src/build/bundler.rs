@@ -17,11 +17,25 @@ pub struct BundlerConfig {
     move_tests_to_the_end: bool,
 }
 
-pub struct Bundler {
+#[derive(Default)]
+pub struct Bundler<'s> {
+    current_lib: Option<&'s str>,
     config: BundlerConfig,
 }
 
-impl Bundler {
+impl<'s> Bundler<'s> {
+    fn with_config(config: BundlerConfig) -> Bundler<'s> {
+        Bundler {
+            config,
+            ..Default::default()
+        }
+    }
+
+    fn with_lib(mut self, lib_name: &'s str) -> Bundler<'s> {
+        self.current_lib = Some(lib_name);
+        self
+    }
+
     fn extract_test_nodes(&mut self, node: &mut syn::File) -> Vec<syn::Item> {
         let test_nodes = node
             .items
@@ -43,7 +57,7 @@ impl Bundler {
     }
 }
 
-impl VisitMut for Bundler {
+impl<'s> VisitMut for Bundler<'s> {
     fn visit_file_mut(&mut self, node: &mut syn::File) {
         for it in &mut node.attrs {
             self.visit_attribute_mut(it);
@@ -67,7 +81,7 @@ pub fn bundle_task(task: &Task) -> Result<String> {
             .with_context(|| format!("Cannot file parent for {}", lib.src_path))?
             .as_std_path();
         let required_files = get_required_files(main_path, lib_path, &lib.name);
-        if let Ok(lib_mod) = create_mod(lib_path, &lib.name, &required_files) {
+        if let Ok(lib_mod) = create_mod(lib_path, &lib.name, &lib.name, &required_files) {
             syntax_tree.items.push(lib_mod);
         }
     }
@@ -76,7 +90,7 @@ pub fn bundle_task(task: &Task) -> Result<String> {
         remove_tests: false,
         move_tests_to_the_end: true,
     };
-    Bundler { config }.visit_file_mut(&mut syntax_tree);
+    Bundler::with_config(config).visit_file_mut(&mut syntax_tree);
 
     let code = syntax_tree.into_token_stream().to_string();
     let code = prettify(&code)?;
@@ -85,6 +99,7 @@ pub fn bundle_task(task: &Task) -> Result<String> {
 
 fn create_mod<P: AsRef<Path>>(
     base_path: P,
+    lib_name: &str,
     mod_name: &str,
     required_files: &[PathBuf],
 ) -> Result<syn::Item> {
@@ -101,7 +116,9 @@ fn create_mod<P: AsRef<Path>>(
             remove_tests: true,
             move_tests_to_the_end: false,
         };
-        Bundler { config }.visit_file_mut(&mut syntax);
+        Bundler::with_config(config)
+            .with_lib(lib_name)
+            .visit_file_mut(&mut syntax);
 
         items.extend(syntax.items);
     }
@@ -124,7 +141,7 @@ fn create_mod<P: AsRef<Path>>(
         let local_mod = required_files
             .iter()
             .filter(|file| file.starts_with(entry.path()))
-            .filter_map(|_| create_mod(entry.path(), local_name, required_files).ok())
+            .filter_map(|_| create_mod(entry.path(), lib_name, local_name, required_files).ok())
             .next();
         if let Some(local_mod) = local_mod {
             items.push(local_mod);
