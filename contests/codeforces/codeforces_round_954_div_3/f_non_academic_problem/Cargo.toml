@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "f_non_academic_problem"
+version = "0.1.0"
+edition = "2021"
+default-run = "f_non_academic_problem"
+
+[dependencies]
+algo = { path = "../../../../algo" }
