@@ -7,6 +7,9 @@ use tokio::{fs, process};
 impl Run for Build {
     async fn run(&self) -> Result<()> {
         let task = Task::from_current_dir().await?;
+        if task.submit_file.is_file() {
+            fs::remove_file(&task.submit_file).await?;
+        }
         let code = bundler::bundle_task(&task)?;
         fs::write(&task.submit_file, code).await?;
 
