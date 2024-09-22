@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "a_zhans_blender"
+version = "0.1.0"
+edition = "2021"
+default-run = "a_zhans_blender"
+
+[dependencies]
+algo = { path = "../../../../algo" }
