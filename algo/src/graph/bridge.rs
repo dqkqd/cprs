@@ -1,11 +1,11 @@
 use super::base::Graph;
 
 pub trait Bridge {
-    fn bridge(&self, root: u32) -> DfsTree;
+    fn bridges(&self, root: u32) -> DfsTree;
 }
 
 impl Bridge for Graph {
-    fn bridge(&self, root: u32) -> DfsTree {
+    fn bridges(&self, root: u32) -> DfsTree {
         DfsTree::new(self, root)
     }
 }
