@@ -16,7 +16,7 @@ fn solve_case<R: Read, W: Write>(reader: &mut Reader<R>, writer: &mut Writer<W>)
         g.add_edge(u, v);
     }
 
-    let components = g.scc().components();
+    let components = g.scc();
     writeln!(writer, "{}", components.size).unwrap();
     for id in 0..components.size {
         write!(writer, "{} ", components[id].len()).unwrap();

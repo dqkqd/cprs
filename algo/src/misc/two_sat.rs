@@ -23,7 +23,7 @@ impl TwoSat {
     }
 
     pub fn solve(self) -> Option<TwoSatResult> {
-        let components = self.graph.scc().components();
+        let components = self.graph.scc();
         let assignment = components
             .ids
             .chunks_exact(2)

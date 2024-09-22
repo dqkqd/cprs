@@ -35,7 +35,7 @@ impl Components {
 }
 
 #[derive(Debug)]
-pub struct SCC {
+pub(super) struct Scc {
     graph: Graph,
 
     visited: Vec<i32>,
@@ -50,10 +50,10 @@ pub struct SCC {
     num_components: i32,
 }
 
-impl SCC {
-    pub fn new(graph: Graph) -> SCC {
+impl Scc {
+    pub(super) fn new(graph: Graph) -> Scc {
         let size = graph.size;
-        SCC {
+        Scc {
             graph,
 
             visited: Vec::new(),
@@ -69,7 +69,7 @@ impl SCC {
         }
     }
 
-    pub fn components(mut self) -> Components {
+    pub(super) fn components(mut self) -> Components {
         self.tarjan();
         Components::new(self.component_ids, self.num_components as usize)
     }
@@ -149,7 +149,7 @@ mod test {
         g.add_edge(8, 6);
         g.add_edge(8, 9);
         g.add_edge(9, 4);
-        let components = g.scc().components();
+        let components = g.scc();
 
         assert_eq!(components.size, 4);
 
