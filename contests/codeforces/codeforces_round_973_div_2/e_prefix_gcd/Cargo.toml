@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "e_prefix_gcd"
+version = "0.1.0"
+edition = "2021"
+default-run = "e_prefix_gcd"
+
+[dependencies]
+algo = { path = "../../../../algo" }
