@@ -1,4 +1,4 @@
-use crate::graph::base::Graph;
+use crate::graph::{base::Graph, scc::Scc};
 
 pub struct TwoSat {
     graph: Graph,

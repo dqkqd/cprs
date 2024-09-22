@@ -2,6 +2,16 @@ use std::{cmp::min, ops::Index};
 
 use super::base::Graph;
 
+pub trait Scc {
+    fn scc(self) -> Components;
+}
+
+impl Scc for Graph {
+    fn scc(self) -> Components {
+        SccGraph::new(self).components()
+    }
+}
+
 #[derive(Debug)]
 pub struct Components {
     pub ids: Vec<i32>,
@@ -35,7 +45,7 @@ impl Components {
 }
 
 #[derive(Debug)]
-pub(super) struct Scc {
+pub(super) struct SccGraph {
     graph: Graph,
 
     visited: Vec<i32>,
@@ -50,10 +60,10 @@ pub(super) struct Scc {
     num_components: i32,
 }
 
-impl Scc {
-    pub(super) fn new(graph: Graph) -> Scc {
+impl SccGraph {
+    pub(super) fn new(graph: Graph) -> SccGraph {
         let size = graph.size;
-        Scc {
+        SccGraph {
             graph,
 
             visited: Vec::new(),

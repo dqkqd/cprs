@@ -1,7 +1,5 @@
 use std::ops::Index;
 
-use super::scc;
-
 #[derive(Debug)]
 pub struct Graph {
     pub(super) adj: Vec<Vec<i32>>,
@@ -25,9 +23,5 @@ impl Graph {
 
     pub fn add_edge(&mut self, u: i32, v: i32) {
         self.adj[u as usize].push(v);
-    }
-
-    pub fn scc(self) -> scc::Components {
-        scc::Scc::new(self).components()
     }
 }
