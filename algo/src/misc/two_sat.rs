@@ -15,7 +15,7 @@ impl TwoSat {
         }
     }
 
-    pub fn add_clause(&mut self, a: i32, var_a: bool, b: i32, var_b: bool) {
+    pub fn add_clause(&mut self, a: u32, var_a: bool, b: u32, var_b: bool) {
         let pos = |x, var_x| if var_x { 2 * x } else { 2 * x + 1 };
         let neg = |x, var_x| pos(x, var_x) ^ 1;
         self.graph.add_edge(neg(a, var_a), pos(b, var_b));
