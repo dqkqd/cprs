@@ -38,7 +38,10 @@ pub struct Cd {
 pub struct Build;
 
 #[derive(Parser)]
-pub struct Submit;
+pub struct Submit {
+    #[arg(short, long)]
+    pub commit: bool,
+}
 
 impl Cmd {
     pub async fn entry_point() -> Result<()> {

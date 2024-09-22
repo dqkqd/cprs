@@ -5,10 +5,18 @@ use crate::task::Task;
 
 pub struct Submitter<'a> {
     pub task: &'a Task,
+    pub commit: bool,
 }
 
 impl<'a> Submitter<'a> {
-    pub async fn git_submit(&self) -> Result<()> {
+    pub async fn submit(&self) -> Result<()> {
+        if self.commit {
+            self.git_commit().await?;
+        }
+        Ok(())
+    }
+
+    async fn git_commit(&self) -> Result<()> {
         // check status before submitting to make sure not dirty files are committed
         let out = process::Command::new("git")
             .args(["diff", "--staged"])

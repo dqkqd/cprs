@@ -13,8 +13,12 @@ impl Run for Submit {
         let task = Task::from_current_dir().await?;
         DaemonizeClipboard::try_spawn_copy_process(&task.submit_file)?;
 
-        let submitter = Submitter { task: &task };
-        submitter.git_submit().await?;
+        let submitter = Submitter {
+            task: &task,
+            commit: self.commit,
+        };
+
+        submitter.submit().await?;
         Ok(())
     }
 }
