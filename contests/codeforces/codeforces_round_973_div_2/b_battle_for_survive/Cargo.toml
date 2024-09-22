@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "b_battle_for_survive"
+version = "0.1.0"
+edition = "2021"
+default-run = "b_battle_for_survive"
+
+[dependencies]
+algo = { path = "../../../../algo" }
