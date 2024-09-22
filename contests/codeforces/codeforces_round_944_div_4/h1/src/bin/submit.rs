@@ -103,7 +103,7 @@ pub mod algo {
                 }
             }
             #[derive(Debug)]
-            pub(crate) struct Scc {
+            pub(super) struct Scc {
                 graph: Graph,
                 visited: Vec<i32>,
                 visiting: Vec<bool>,
