@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "h1"
+version = "0.1.0"
+edition = "2021"
+default-run = "h1"
+
+[dependencies]
+algo = { path = "../../../../algo" }
