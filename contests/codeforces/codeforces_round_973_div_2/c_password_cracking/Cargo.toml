@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "c_password_cracking"
+version = "0.1.0"
+edition = "2021"
+default-run = "c_password_cracking"
+
+[dependencies]
+algo = { path = "../../../../algo" }
