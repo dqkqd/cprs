@@ -14,23 +14,23 @@ impl Scc for Graph {
 
 #[derive(Debug)]
 pub struct Components {
-    pub ids: Vec<i32>,
+    pub ids: Vec<u32>,
     pub size: usize,
-    pub inner: Vec<Vec<i32>>,
+    pub inner: Vec<Vec<u32>>,
 }
 
 impl Index<usize> for Components {
-    type Output = Vec<i32>;
-    fn index(&self, index: usize) -> &Vec<i32> {
+    type Output = Vec<u32>;
+    fn index(&self, index: usize) -> &Vec<u32> {
         &self.inner[index]
     }
 }
 
 impl Components {
-    fn new(component_ids: Vec<i32>, size: usize) -> Components {
+    fn new(component_ids: Vec<u32>, size: usize) -> Components {
         let mut inner = vec![vec![]; size];
         for (node, id) in component_ids.iter().enumerate() {
-            inner[*id as usize].push(node as i32);
+            inner[*id as usize].push(node as u32);
         }
         Components {
             ids: component_ids,
@@ -39,7 +39,7 @@ impl Components {
         }
     }
 
-    pub fn is_same(&self, u: i32, v: i32) -> bool {
+    pub fn is_same(&self, u: u32, v: u32) -> bool {
         self.ids[u as usize] == self.ids[v as usize]
     }
 }
@@ -48,16 +48,16 @@ impl Components {
 pub(super) struct SccGraph<'g> {
     graph: &'g Graph,
 
-    visited: Vec<i32>,
+    visited: Vec<u32>,
     visiting: Vec<bool>,
 
-    low: Vec<i32>,
+    low: Vec<u32>,
 
-    order: Vec<Option<i32>>,
-    current_order: i32,
+    order: Vec<Option<u32>>,
+    current_order: u32,
 
-    component_ids: Vec<i32>,
-    num_components: i32,
+    component_ids: Vec<u32>,
+    num_components: u32,
 }
 
 impl<'g> SccGraph<'g> {
@@ -97,7 +97,7 @@ impl<'g> SccGraph<'g> {
 
     fn dfs(&mut self, node: usize) {
         self.current_order += 1;
-        self.visited.push(node as i32);
+        self.visited.push(node as u32);
         self.visiting[node] = true;
         self.order[node] = Some(self.current_order);
         self.low[node] = self.current_order;
