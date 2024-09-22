@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "unionfind"
+version = "0.1.0"
+edition = "2021"
+default-run = "unionfind"
+
+[dependencies]
+algo = { path = "../../../algo" }
