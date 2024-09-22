@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "g2_min_fund_prison_medium"
+version = "0.1.0"
+edition = "2021"
+default-run = "g2_min_fund_prison_medium"
+
+[dependencies]
+algo = { path = "../../../../algo" }
