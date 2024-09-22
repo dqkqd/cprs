@@ -43,7 +43,7 @@ pub mod algo {
     }
     pub mod graph {
         pub mod base {
-            use super::scc::SCC;
+            use super::scc;
             use std::ops::Index;
             #[derive(Debug)]
             pub struct Graph {
@@ -66,13 +66,8 @@ pub mod algo {
                 pub fn add_edge(&mut self, u: i32, v: i32) {
                     self.adj[u as usize].push(v);
                 }
-                pub fn add_edges(&mut self, edges: &[(i32, i32)]) {
-                    for (u, v) in edges {
-                        self.add_edge(*u, *v);
-                    }
-                }
-                pub fn scc(self) -> SCC {
-                    SCC::new(self)
+                pub fn scc(self) -> scc::Components {
+                    scc::Scc::new(self).components()
                 }
             }
         }
@@ -108,7 +103,7 @@ pub mod algo {
                 }
             }
             #[derive(Debug)]
-            pub struct SCC {
+            pub(crate) struct Scc {
                 graph: Graph,
                 visited: Vec<i32>,
                 visiting: Vec<bool>,
@@ -118,10 +113,10 @@ pub mod algo {
                 component_ids: Vec<i32>,
                 num_components: i32,
             }
-            impl SCC {
-                pub fn new(graph: Graph) -> SCC {
+            impl Scc {
+                pub(super) fn new(graph: Graph) -> Scc {
                     let size = graph.size;
-                    SCC {
+                    Scc {
                         graph,
                         visited: Vec::new(),
                         visiting: vec![false; size],
@@ -132,7 +127,7 @@ pub mod algo {
                         num_components: 0,
                     }
                 }
-                pub fn components(mut self) -> Components {
+                pub(super) fn components(mut self) -> Components {
                     self.tarjan();
                     Components::new(self.component_ids, self.num_components as usize)
                 }
@@ -313,7 +308,7 @@ pub mod algo {
                     self.graph.add_edge(neg(b, var_b), pos(a, var_a));
                 }
                 pub fn solve(self) -> Option<TwoSatResult> {
-                    let components = self.graph.scc().components();
+                    let components = self.graph.scc();
                     let assignment = components
                         .ids
                         .chunks_exact(2)
