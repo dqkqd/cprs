@@ -4,6 +4,7 @@ mod clipboard;
 mod config;
 mod history;
 mod listener;
+mod submitter;
 mod task;
 mod template;
 mod utils;

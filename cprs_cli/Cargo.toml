@@ -7,6 +7,7 @@ edition = "2021"
 anyhow = "1.0.88"
 arboard = { version = "3.4.0", features = ["wayland-data-control"] }
 cargo_metadata = "0.18.1"
+chrono = "0.4.38"
 clap = { version = "4.5.17", features = ["derive"] }
 confy = "0.6.1"
 crossterm = "0.28.1"
