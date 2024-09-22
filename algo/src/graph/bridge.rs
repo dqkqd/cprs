@@ -1,18 +1,18 @@
 use super::base::Graph;
 
 pub trait Bridge {
-    fn bridge(self) -> DfsTree;
+    fn bridge(&self) -> DfsTree;
 }
 
 impl Bridge for Graph {
-    fn bridge(self) -> DfsTree {
+    fn bridge(&self) -> DfsTree {
         DfsTree::new(self, 0)
     }
 }
 
 #[derive(Debug)]
-pub struct DfsTree {
-    graph: Graph,
+pub struct DfsTree<'g> {
+    graph: &'g Graph,
     pub root: u32,
     pub parent: Vec<Option<u32>>,
     pub weight: Vec<u32>,
@@ -20,8 +20,8 @@ pub struct DfsTree {
     pub bridges: Vec<(u32, u32)>,
 }
 
-impl DfsTree {
-    pub(super) fn new(graph: Graph, root: u32) -> DfsTree {
+impl<'g> DfsTree<'g> {
+    pub(super) fn new(graph: &'g Graph, root: u32) -> DfsTree {
         let n = graph.size;
         DfsTree {
             graph,
@@ -34,7 +34,7 @@ impl DfsTree {
         .bridges()
     }
 
-    fn bridges(mut self) -> DfsTree {
+    fn bridges(mut self) -> DfsTree<'g> {
         let mut visited = vec![false; self.graph.size];
         let mut backedges_count = vec![-1; self.graph.size];
         self.dfs(self.root, &mut visited, &mut backedges_count);
