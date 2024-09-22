@@ -9,12 +9,6 @@ pub struct Submitter<'a> {
 
 impl<'a> Submitter<'a> {
     pub async fn git_submit(&self) -> Result<()> {
-        // check branch before submitting
-        process::Command::new("git")
-            .args(["checkout", "contest"])
-            .output()
-            .await?;
-
         // check status before submitting to make sure not dirty files are committed
         let out = process::Command::new("git")
             .args(["diff", "--staged"])
@@ -23,6 +17,12 @@ impl<'a> Submitter<'a> {
         if !out.stderr.is_empty() || !out.stdout.trim_ascii().is_empty() {
             bail!("Root folder is dirty, please clean before submitting");
         }
+
+        // change branch before submitting
+        process::Command::new("git")
+            .args(["checkout", "contest"])
+            .output()
+            .await?;
 
         let mut child = process::Command::new("git")
             .args(["add", self.task.task_folder.to_str().unwrap()])
