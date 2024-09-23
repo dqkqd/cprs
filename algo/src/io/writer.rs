@@ -10,6 +10,19 @@ impl<W: Write> Writer<W> {
             buf_writer: BufWriter::new(inner),
         }
     }
+
+    pub fn write_vec<T>(&mut self, v: &[T])
+    where
+        T: std::fmt::Display,
+    {
+        if !v.is_empty() {
+            let (last, rest) = v.split_last().unwrap();
+            for e in rest {
+                write!(self, "{} ", e).unwrap();
+            }
+            writeln!(self, "{}", last).unwrap();
+        }
+    }
 }
 
 impl<W: Write> Write for Writer<W> {

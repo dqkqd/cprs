@@ -27,6 +27,18 @@ impl<R: Read> Reader<R> {
         let data = String::from_utf8(raw).unwrap();
         FromStr::from_str(&data).unwrap()
     }
+    pub fn read_vec<T>(&mut self, n: usize) -> Vec<T>
+    where
+        T: FromStr,
+        <T as FromStr>::Err: ::std::fmt::Debug,
+    {
+        let mut v = Vec::with_capacity(n);
+        for _ in 0..n {
+            let x = self.read::<T>();
+            v.push(x);
+        }
+        v
+    }
     fn skip_whitespaces(&mut self) -> std::io::Result<usize> {
         skip_whitespaces(&mut self.buf_reader)
     }
