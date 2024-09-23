@@ -7,7 +7,7 @@ pub struct Writer<W: Write> {
 impl<W: Write> Writer<W> {
     pub fn new(inner: W) -> Writer<W> {
         Writer {
-            buf_writer: BufWriter::with_capacity(1024, inner),
+            buf_writer: BufWriter::new(inner),
         }
     }
 }

@@ -3,8 +3,6 @@ use std::{
     str::FromStr,
 };
 
-const DEFAULT_BUF_SIZE: usize = 1024;
-
 pub struct Reader<R: Read> {
     buf_reader: BufReader<R>,
 }
@@ -12,7 +10,7 @@ pub struct Reader<R: Read> {
 impl<R: Read> Reader<R> {
     pub fn new(inner: R) -> Reader<R> {
         Reader {
-            buf_reader: BufReader::with_capacity(DEFAULT_BUF_SIZE, inner),
+            buf_reader: BufReader::new(inner),
         }
     }
     pub fn read<T>(&mut self) -> T
