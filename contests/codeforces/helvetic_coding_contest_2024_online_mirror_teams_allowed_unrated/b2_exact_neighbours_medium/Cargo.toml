@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "b2_exact_neighbours_medium"
+version = "0.1.0"
+edition = "2021"
+default-run = "b2_exact_neighbours_medium"
+
+[dependencies]
+algo = { path = "../../../../algo" }
