@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "z_algorithm"
+version = "0.1.0"
+edition = "2021"
+default-run = "z_algorithm"
+
+[dependencies]
+algo = { path = "../../../algo" }
