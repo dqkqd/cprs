@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "b2_reverse_card_hard_version"
+version = "0.1.0"
+edition = "2021"
+default-run = "b2_reverse_card_hard_version"
+
+[dependencies]
+algo = { path = "../../../../algo" }
