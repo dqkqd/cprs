@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "g2_division_lcp_hard_version"
+version = "0.1.0"
+edition = "2021"
+default-run = "g2_division_lcp_hard_version"
+
+[dependencies]
+algo = { path = "../../../../algo" }
