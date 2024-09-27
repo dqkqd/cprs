@@ -6,7 +6,8 @@ fn solve_case<R: Read, W: Write>(reader: &mut Reader<R>, writer: &mut Writer<W>)
 
 fn solve<R: Read, W: Write>(reader: &mut Reader<R>, writer: &mut Writer<W>) {
     let testcases: usize = reader.read();
-    for _ in 0..testcases {
+    for case in 0..testcases {
+        eprintln!("Solve case {}", case + 1);
         solve_case(reader, writer);
     }
 }
