@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "c_cards_partition"
+version = "0.1.0"
+edition = "2021"
+default-run = "c_cards_partition"
+
+[dependencies]
+algo = { path = "../../../../algo" }
