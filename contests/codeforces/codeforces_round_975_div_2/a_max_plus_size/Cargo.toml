@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "a_max_plus_size"
+version = "0.1.0"
+edition = "2021"
+default-run = "a_max_plus_size"
+
+[dependencies]
+algo = { path = "../../../../algo" }
