@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "b_all_pairs_segments"
+version = "0.1.0"
+edition = "2021"
+default-run = "b_all_pairs_segments"
+
+[dependencies]
+algo = { path = "../../../../algo" }
