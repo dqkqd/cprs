@@ -192,7 +192,22 @@ impl<'s> Bundler<'s> {
             .filter(|item| !self.contains_macro_name(item))
             .collect();
     }
-
+    fn handle_rename_crate_macro(&mut self, node: &mut syn::UsePath) {
+        // rename crate::*::macro to crate::macro
+        if node.ident == "crate" {
+            if let syn::UseTree::Path(use_path) = node.tree.as_ref() {
+                if let syn::UseTree::Name(use_name) = use_path.tree.as_ref() {
+                    if self.macros.contains_key(&use_name.ident.to_string()) {
+                        // before:
+                        // node = crate::*::macro:
+                        // after swap
+                        // node = crate::macro
+                        std::mem::swap(use_path.clone().tree.deref_mut(), node.tree.deref_mut());
+                    }
+                }
+            }
+        }
+    }
     fn handle_rename_crate_to_lib(&mut self, node: &mut syn::UsePath) {
         if self.config.rename_crate_to_lib_name
             && node.ident == "crate"
@@ -239,6 +254,7 @@ impl<'s> VisitMut for Bundler<'s> {
 
     fn visit_use_path_mut(&mut self, node: &mut syn::UsePath) {
         self.handle_rename_crate_to_lib(node);
+        self.handle_rename_crate_macro(node);
         self.visit_ident_mut(&mut node.ident);
         self.collect_required_files(node);
         self.visit_use_tree_mut(&mut node.tree);
