@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "g_milky_days"
+version = "0.1.0"
+edition = "2021"
+default-run = "g_milky_days"
+
+[dependencies]
+algo = { path = "../../../../algo" }
