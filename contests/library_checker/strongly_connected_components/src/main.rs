@@ -1,7 +1,10 @@
 use std::io::{Read, Write};
 
 use algo::{
-    graph::base::Graph,
+    graph::{
+        base::{Graph, GraphBase},
+        scc::Scc,
+    },
     io::{reader::Reader, writer::Writer},
 };
 
@@ -9,10 +12,10 @@ fn solve_case<R: Read, W: Write>(reader: &mut Reader<R>, writer: &mut Writer<W>)
     let n: usize = reader.read();
     let m: usize = reader.read();
 
-    let mut g = Graph::new(n);
+    let mut g = Graph::new_directed(n);
     for _ in 0..m {
-        let u: i32 = reader.read();
-        let v: i32 = reader.read();
+        let u: u32 = reader.read();
+        let v: u32 = reader.read();
         g.add_edge(u, v);
     }
 

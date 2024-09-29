@@ -1,4 +1,7 @@
-use crate::graph::{base::Graph, scc::Scc};
+use crate::graph::{
+    base::{Graph, GraphBase},
+    scc::Scc,
+};
 
 pub struct TwoSat {
     graph: Graph,
@@ -11,7 +14,7 @@ pub struct TwoSatResult {
 impl TwoSat {
     pub fn new(size: usize) -> TwoSat {
         TwoSat {
-            graph: Graph::new(size * 2),
+            graph: Graph::new_directed(size * 2),
         }
     }
 

@@ -16,7 +16,7 @@ fn solve_case<R: Read, W: Write>(reader: &mut Reader<R>, writer: &mut Writer<W>)
         let a: i32 = reader.read();
         let b: i32 = reader.read();
         let _: char = reader.read();
-        two_sat.add_clause(a.abs() - 1, a > 0, b.abs() - 1, b > 0);
+        two_sat.add_clause((a.abs() - 1) as u32, a > 0, (b.abs() - 1) as u32, b > 0);
     }
 
     match two_sat.solve() {

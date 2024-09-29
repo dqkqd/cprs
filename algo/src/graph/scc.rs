@@ -1,6 +1,6 @@
-use std::{cmp::min, ops::Index};
-
-use super::base::Graph;
+use super::base::{Graph, GraphBase};
+use crate::rfn;
+use std::ops::Index;
 
 pub trait Scc {
     fn scc(&self) -> Components;
@@ -8,29 +8,29 @@ pub trait Scc {
 
 impl Scc for Graph {
     fn scc(&self) -> Components {
-        SccGraph::new(self).components()
+        SccGraph { graph: self }.components()
     }
 }
 
 #[derive(Debug)]
 pub struct Components {
-    pub ids: Vec<u32>,
+    pub ids: Vec<usize>,
     pub size: usize,
-    pub inner: Vec<Vec<u32>>,
+    pub inner: Vec<Vec<usize>>,
 }
 
 impl Index<usize> for Components {
-    type Output = Vec<u32>;
-    fn index(&self, index: usize) -> &Vec<u32> {
+    type Output = Vec<usize>;
+    fn index(&self, index: usize) -> &Vec<usize> {
         &self.inner[index]
     }
 }
 
 impl Components {
-    fn new(component_ids: Vec<u32>, size: usize) -> Components {
+    fn new(component_ids: Vec<usize>, size: usize) -> Components {
         let mut inner = vec![vec![]; size];
         for (node, id) in component_ids.iter().enumerate() {
-            inner[*id as usize].push(node as u32);
+            inner[*id].push(node);
         }
         Components {
             ids: component_ids,
@@ -39,96 +39,85 @@ impl Components {
         }
     }
 
-    pub fn is_same(&self, u: u32, v: u32) -> bool {
-        self.ids[u as usize] == self.ids[v as usize]
+    pub fn is_same(&self, u: usize, v: usize) -> bool {
+        self.ids[u] == self.ids[v]
     }
 }
 
 #[derive(Debug)]
 pub(super) struct SccGraph<'g> {
     graph: &'g Graph,
-
-    visited: Vec<u32>,
-    visiting: Vec<bool>,
-
-    low: Vec<u32>,
-
-    order: Vec<Option<u32>>,
-    current_order: u32,
-
-    component_ids: Vec<u32>,
-    num_components: u32,
 }
 
 impl<'g> SccGraph<'g> {
-    pub(super) fn new(graph: &'g Graph) -> SccGraph {
-        let size = graph.size;
-        SccGraph {
-            graph,
-
-            visited: Vec::new(),
-            visiting: vec![false; size],
-
-            low: vec![0; size],
-
-            order: vec![None; size],
-            current_order: 0,
-
-            component_ids: vec![0; size],
-            num_components: 0,
-        }
-    }
-
     pub(super) fn components(mut self) -> Components {
-        self.tarjan();
-        Components::new(self.component_ids, self.num_components as usize)
+        let (num_components, component_ids) = self.tarjan();
+
+        // reorder
+        let component_ids = component_ids
+            .into_iter()
+            .map(|id| num_components - id - 1)
+            .collect();
+
+        Components::new(component_ids, num_components)
     }
 
-    fn tarjan(&mut self) {
-        for node in 0..self.graph.size {
-            if self.order[node].is_none() {
-                self.dfs(node);
+    fn tarjan(&mut self) -> (usize, Vec<usize>) {
+        let size = self.graph.node_counts();
+        let mut visited = Vec::new();
+        let mut visiting = vec![false; size];
+        let mut low = vec![0; size];
+        let mut order = vec![None; size];
+        let mut current_order = 0;
+
+        let mut component_ids = vec![0; size];
+        let mut num_components = 0;
+
+        let mut dfs = rfn!(|dfs, node: usize, entry: bool| {
+            if entry && order[node].is_some() {
+                return;
             }
-        }
-        for component_id in self.component_ids.iter_mut() {
-            *component_id = self.num_components - *component_id - 1;
-        }
-    }
 
-    fn dfs(&mut self, node: usize) {
-        self.current_order += 1;
-        self.visited.push(node as u32);
-        self.visiting[node] = true;
-        self.order[node] = Some(self.current_order);
-        self.low[node] = self.current_order;
+            current_order += 1;
+            visited.push(node as u32);
+            visiting[node] = true;
+            order[node] = Some(current_order);
+            low[node] = current_order;
 
-        for i in 0..self.graph[node].len() {
-            let neighbor = self.graph[node][i] as usize;
-            match self.order[neighbor] {
-                None => {
-                    self.dfs(neighbor);
-                    self.low[node] = min(self.low[node], self.low[neighbor]);
-                }
-                Some(order) => {
-                    if self.visiting[neighbor] {
-                        self.low[node] = min(self.low[node], order);
+            for neighbor in self.graph.neighbors(node as u32) {
+                let neighbor = neighbor as usize;
+                match order[neighbor] {
+                    None => {
+                        dfs(neighbor, false);
+                        low[node] = low[node].min(low[neighbor]);
+                    }
+                    Some(order) => {
+                        if visiting[neighbor] {
+                            low[node] = low[node].min(order);
+                        }
                     }
                 }
             }
+
+            if Some(low[node]) == order[node] {
+                while let Some(n) = visited.last() {
+                    let n = *n as usize;
+                    visited.pop();
+                    visiting[n] = false;
+                    component_ids[n] = num_components;
+                    if n == node {
+                        break;
+                    }
+                }
+                num_components += 1;
+            }
+        });
+
+        for node in 0..self.graph.node_counts() {
+            dfs(node, true);
         }
 
-        if Some(self.low[node]) == self.order[node] {
-            while let Some(n) = self.visited.last() {
-                let n = *n as usize;
-                self.visited.pop();
-                self.visiting[n] = false;
-                self.component_ids[n] = self.num_components;
-                if n == node {
-                    break;
-                }
-            }
-            self.num_components += 1;
-        }
+        (num_components, component_ids)
     }
 }
 
@@ -139,7 +128,7 @@ mod test {
 
     #[test]
     fn simple() {
-        let mut g = Graph::new(10);
+        let mut g = Graph::new_directed(10);
         g.add_edge(0, 1);
         g.add_edge(0, 7);
         g.add_edge(1, 1);
