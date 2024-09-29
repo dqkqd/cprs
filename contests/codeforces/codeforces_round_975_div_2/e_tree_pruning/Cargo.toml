@@ -1,0 +1,10 @@
+[workspace]
+
+[package]
+name = "e_tree_pruning"
+version = "0.1.0"
+edition = "2021"
+default-run = "e_tree_pruning"
+
+[dependencies]
+algo = { path = "../../../../algo" }
